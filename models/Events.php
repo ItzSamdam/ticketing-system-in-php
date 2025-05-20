@@ -5,7 +5,7 @@ require_once __DIR__ . '/../config/Database.php';
 class User
 {
     private $db;
-    private $table = 'users';
+    private $table = 'events';
 
     public function __construct()
     {
@@ -14,25 +14,33 @@ class User
 
     public function findAll()
     {
-        $stmt = $this->db->prepare("SELECT user_id, email, first_name, last_name, phone_number, address, verified, status, is_organizer, profile_image_url, created_at, updated_at FROM {$this->table}");
+        $stmt = $this->db->prepare("SELECT event_id, organizer_id, title, description, image_url, location, event_type, virtual_url, start_datetime, end_datetime, timezone, status, created_at, updated_at FROM {$this->table}");
         $stmt->execute();
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 
     public function findById($id)
     {
-        $stmt = $this->db->prepare("SELECT  user_id, email, first_name, last_name, phone_number, address, verified, status, is_organizer, profile_image_url, created_at, updated_at FROM {$this->table} WHERE id = :id");
+        $stmt = $this->db->prepare("SELECT event_id, organizer_id, title, description, image_url, location, event_type, virtual_url, start_datetime, end_datetime, timezone, status, created_at, updated_at FROM {$this->table} WHERE id = :id");
         $stmt->bindParam(':id', $id);
         $stmt->execute();
         return $stmt->fetch(\PDO::FETCH_ASSOC);
     }
 
-    public function findByEmail($email)
+    public function findByOrganizerId($organizer_id)
     {
-        $stmt = $this->db->prepare("SELECT * FROM {$this->table} WHERE email = :email");
-        $stmt->bindParam(':email', $email);
+        $stmt = $this->db->prepare("SELECT event_id, organizer_id, title, description, image_url, location, event_type, virtual_url, start_datetime, end_datetime, timezone, status, created_at, updated_at FROM {$this->table} WHERE organizer_id = :organizer_id");
+        $stmt->bindParam(':organizer_id', $organizer_id);
         $stmt->execute();
-        return $stmt->fetch(\PDO::FETCH_ASSOC);
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    }
+
+    public function findByStatus($status)
+    {
+        $stmt = $this->db->prepare("SELECT event_id, organizer_id, title, description, image_url, location, event_type, virtual_url, start_datetime, end_datetime, timezone, status, created_at, updated_at FROM {$this->table} WHERE status = :status");
+        $stmt->bindParam(':status', $status);
+        $stmt->execute();
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 
     public function create($data)
@@ -40,21 +48,21 @@ class User
         $now = date('Y-m-d H:i:s');
 
         $stmt = $this->db->prepare("
-            INSERT INTO {$this->table} (email, first_name, last_name, phone_number, address, verified, is_organizer, profile_image_url, password_hash, status, token_version, created_at, updated_at)
-            VALUES (:email, :first_name, :last_name, :phone_number, :address, :verified, :is_organizer, :profile_image_url, :password_hash, :status, :token_version, :created_at, :updated_at)
+            INSERT INTO {$this->table} (organizer_id, title, description, image_url, location, event_type, virtual_url, start_datetime, end_datetime, timezone, status, created_at, updated_at)
+            VALUES (:organizer_id, :title, :description, :image_url, :location, :event_type, :virtual_url, :start_datetime, :end_datetime, :timezone, :status, :created_at, :updated_at)
         ");
 
-        $stmt->bindParam(':email', $data['email']);
-        $stmt->bindParam(':first_name', $data['first_name']);
-        $stmt->bindParam(':last_name', $data['last_name']);
-        $stmt->bindParam(':phone_number', $data['phone_number']);
-        $stmt->bindParam(':address', $data['address']);
-        $stmt->bindParam(':verified', $data['verified']);
-        $stmt->bindParam(':is_organizer', $data['is_organizer']);
-        $stmt->bindParam(':profile_image_url', $data['profile_image_url']);
-        $stmt->bindParam(':password_hash', $data['password']);
-        $stmt->bindParam(':status', 'active'); // Default status
-        $stmt->bindParam(':token_version', 0); // Default token version
+        $stmt->bindParam(':organizer_id', $data['organizer_id']);
+        $stmt->bindParam(':title', $data['title']);
+        $stmt->bindParam(':description', $data['description']);
+        $stmt->bindParam(':image_url', $data['image_url']);
+        $stmt->bindParam(':location', $data['location']);
+        $stmt->bindParam(':event_type', $data['event_type']);
+        $stmt->bindParam(':virtual_url', $data['virtual_url']);
+        $stmt->bindParam(':start_datetime', $data['start_datetime']);
+        $stmt->bindParam(':end_datetime', $data['end_datetime']);
+        $stmt->bindParam(':timezone', $data['timezone']);
+        $stmt->bindParam(':status', $data['status']);
         $stmt->bindParam(':created_at', $now);
         $stmt->bindParam(':updated_at', $now);
 
@@ -81,7 +89,7 @@ class User
         $params = [':id' => $id, ':updated_at' => $now];
 
         foreach ($data as $key => $value) {
-            if (in_array($key, ['first_name', 'last_name', 'phone_number', 'address', 'verified', 'is_organizer', 'profile_image_url',])) {
+            if (in_array($key, ['title', 'description', 'image_url', 'location', 'event_type', 'virtual_url', 'start_datetime', 'end_datetime', 'timezone', 'status'])) {
                 $fields[] = "{$key} = :{$key}";
                 $params[":{$key}"] = $value;
             }
@@ -115,7 +123,6 @@ class User
 
         return true;
     }
-
 
     public function softDelete($id)
     {

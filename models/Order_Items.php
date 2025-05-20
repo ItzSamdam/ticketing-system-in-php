@@ -2,10 +2,10 @@
 
 require_once __DIR__ . '/../config/Database.php';
 
-class Product
+class User
 {
     private $db;
-    private $table = 'products';
+    private $table = 'users';
 
     public function __construct()
     {
@@ -14,15 +14,23 @@ class Product
 
     public function findAll()
     {
-        $stmt = $this->db->prepare("SELECT * FROM {$this->table}");
+        $stmt = $this->db->prepare("SELECT id, name, email, created_at, updated_at FROM {$this->table}");
         $stmt->execute();
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 
     public function findById($id)
     {
-        $stmt = $this->db->prepare("SELECT * FROM {$this->table} WHERE id = :id");
+        $stmt = $this->db->prepare("SELECT id, name, email, created_at, updated_at FROM {$this->table} WHERE id = :id");
         $stmt->bindParam(':id', $id);
+        $stmt->execute();
+        return $stmt->fetch(\PDO::FETCH_ASSOC);
+    }
+
+    public function findByEmail($email)
+    {
+        $stmt = $this->db->prepare("SELECT * FROM {$this->table} WHERE email = :email");
+        $stmt->bindParam(':email', $email);
         $stmt->execute();
         return $stmt->fetch(\PDO::FETCH_ASSOC);
     }
@@ -32,13 +40,14 @@ class Product
         $now = date('Y-m-d H:i:s');
 
         $stmt = $this->db->prepare("
-            INSERT INTO {$this->table} (name, description, price, created_at, updated_at)
-            VALUES (:name, :description, :price, :created_at, :updated_at)
+            INSERT INTO {$this->table} (name, email, password, token_version, created_at, updated_at)
+            VALUES (:name, :email, :password, :token_version, :created_at, :updated_at)
         ");
 
         $stmt->bindParam(':name', $data['name']);
-        $stmt->bindParam(':description', $data['description']);
-        $stmt->bindParam(':price', $data['price']);
+        $stmt->bindParam(':email', $data['email']);
+        $stmt->bindParam(':password', $data['password']);
+        $stmt->bindParam(':token_version', 0); // Default token version
         $stmt->bindParam(':created_at', $now);
         $stmt->bindParam(':updated_at', $now);
 
@@ -52,9 +61,9 @@ class Product
     public function update($id, $data)
     {
         // First check if record exists
-        $product = $this->findById($id);
+        $user = $this->findById($id);
 
-        if (!$product) {
+        if (!$user) {
             return false;
         }
 
@@ -65,14 +74,14 @@ class Product
         $params = [':id' => $id, ':updated_at' => $now];
 
         foreach ($data as $key => $value) {
-            if (in_array($key, ['name', 'description', 'price'])) {
+            if (in_array($key, ['name', 'email', 'password'])) {
                 $fields[] = "{$key} = :{$key}";
                 $params[":{$key}"] = $value;
             }
         }
 
         if (empty($fields)) {
-            return $product; // Nothing to update
+            return $user; // Nothing to update
         }
 
         $fields[] = "updated_at = :updated_at";
@@ -87,9 +96,9 @@ class Product
     public function delete($id)
     {
         // First check if record exists
-        $product = $this->findById($id);
+        $user = $this->findById($id);
 
-        if (!$product) {
+        if (!$user) {
             return false;
         }
 
