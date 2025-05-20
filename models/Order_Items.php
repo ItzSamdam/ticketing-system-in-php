@@ -74,7 +74,7 @@ class OrderItem
         $params = [':item_id' => $item_id, ':updated_at' => $now];
 
         foreach ($data as $key => $value) {
-            if (in_array($key, ['name', 'email', 'password'])) {
+            if (in_array($key, ['order_id', 'ticket_type_id', 'quantity', 'price_per_unit'])) {
                 $fields[] = "{$key} = :{$key}";
                 $params[":{$key}"] = $value;
             }
