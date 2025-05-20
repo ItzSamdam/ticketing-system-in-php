@@ -2,10 +2,10 @@
 
 require_once __DIR__ . '/../config/Database.php';
 
-class User
+class Ticket
 {
     private $db;
-    private $table = 'users';
+    private $table = 'tickets';
 
     public function __construct()
     {
@@ -14,23 +14,15 @@ class User
 
     public function findAll()
     {
-        $stmt = $this->db->prepare("SELECT id, name, email, created_at, updated_at FROM {$this->table}");
+        $stmt = $this->db->prepare("SELECT ticket_id, order_item_id, ticket_code, attendee_name, attendee_email, is_checked_in, checked_in_at, created_at, updated_at FROM {$this->table}");
         $stmt->execute();
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 
-    public function findById($id)
+    public function findById($ticket_id)
     {
-        $stmt = $this->db->prepare("SELECT id, name, email, created_at, updated_at FROM {$this->table} WHERE id = :id");
-        $stmt->bindParam(':id', $id);
-        $stmt->execute();
-        return $stmt->fetch(\PDO::FETCH_ASSOC);
-    }
-
-    public function findByEmail($email)
-    {
-        $stmt = $this->db->prepare("SELECT * FROM {$this->table} WHERE email = :email");
-        $stmt->bindParam(':email', $email);
+        $stmt = $this->db->prepare("SELECT ticket_id, order_item_id, ticket_code, attendee_name, attendee_email, is_checked_in, checked_in_at, created_at, updated_at FROM {$this->table} WHERE ticket_id = :ticket_id");
+        $stmt->bindParam(':ticket_id', $ticket_id);
         $stmt->execute();
         return $stmt->fetch(\PDO::FETCH_ASSOC);
     }
@@ -40,30 +32,31 @@ class User
         $now = date('Y-m-d H:i:s');
 
         $stmt = $this->db->prepare("
-            INSERT INTO {$this->table} (name, email, password, token_version, created_at, updated_at)
-            VALUES (:name, :email, :password, :token_version, :created_at, :updated_at)
+            INSERT INTO {$this->table} (order_item_id, ticket_code, attendee_name, attendee_email, is_checked_in, checked_in_at, created_at, updated_at)
+            VALUES (:order_item_id, :ticket_code, :attendee_name, :attendee_email, :is_checked_in, :checked_in_at, :created_at, :updated_at)
         ");
-
-        $stmt->bindParam(':name', $data['name']);
-        $stmt->bindParam(':email', $data['email']);
-        $stmt->bindParam(':password', $data['password']);
-        $stmt->bindParam(':token_version', 0); // Default token version
+        $stmt->bindParam(':order_item_id', $data['order_item_id']);
+        $stmt->bindParam(':ticket_code', $data['ticket_code']);
+        $stmt->bindParam(':attendee_name', $data['attendee_name']);
+        $stmt->bindParam(':attendee_email', $data['attendee_email']);
+        $stmt->bindParam(':is_checked_in', $data['is_checked_in']);
+        $stmt->bindParam(':checked_in_at', $data['checked_in_at']); // Default token version
         $stmt->bindParam(':created_at', $now);
         $stmt->bindParam(':updated_at', $now);
 
         $stmt->execute();
 
-        $id = $this->db->lastInsertId();
+        $ticket = $this->db->lastInsertId();
 
-        return $this->findById($id);
+        return $this->findById($ticket);
     }
 
-    public function update($id, $data)
+    public function update($ticket_id, $data)
     {
         // First check if record exists
-        $user = $this->findById($id);
+        $ticket = $this->findById($ticket_id);
 
-        if (!$user) {
+        if (!$ticket) {
             return false;
         }
 
@@ -71,39 +64,39 @@ class User
 
         // Build update query dynamically based on provided data
         $fields = [];
-        $params = [':id' => $id, ':updated_at' => $now];
+        $params = [':ticket_id' => $ticket_id, ':updated_at' => $now];
 
         foreach ($data as $key => $value) {
-            if (in_array($key, ['name', 'email', 'password'])) {
+            if (in_array($key, ['order_item_id', 'ticket_code', 'attendee_name', 'attendee_email', 'is_checked_in', 'checked_in_at',])) {
                 $fields[] = "{$key} = :{$key}";
                 $params[":{$key}"] = $value;
             }
         }
 
         if (empty($fields)) {
-            return $user; // Nothing to update
+            return $ticket; // Nothing to update
         }
 
         $fields[] = "updated_at = :updated_at";
         $fieldsStr = implode(', ', $fields);
 
-        $stmt = $this->db->prepare("UPDATE {$this->table} SET {$fieldsStr} WHERE id = :id");
+        $stmt = $this->db->prepare("UPDATE {$this->table} SET {$fieldsStr} WHERE ticket_id = :ticket_id");
         $stmt->execute($params);
 
-        return $this->findById($id);
+        return $this->findById($ticket_id);
     }
 
-    public function delete($id)
+    public function delete($ticket_id)
     {
         // First check if record exists
-        $user = $this->findById($id);
+        $ticket = $this->findById($ticket_id);
 
-        if (!$user) {
+        if (!$ticket) {
             return false;
         }
 
-        $stmt = $this->db->prepare("DELETE FROM {$this->table} WHERE id = :id");
-        $stmt->bindParam(':id', $id);
+        $stmt = $this->db->prepare("DELETE FROM {$this->table} WHERE ticket_id = :ticket_id");
+        $stmt->bindParam(':ticket_id', $ticket_id);
         $stmt->execute();
 
         return true;

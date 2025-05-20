@@ -2,7 +2,7 @@
 
 require_once __DIR__ . '/../config/Database.php';
 
-class User
+class Event
 {
     private $db;
     private $table = 'events';
@@ -19,10 +19,10 @@ class User
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 
-    public function findById($id)
+    public function findById($event_id)
     {
-        $stmt = $this->db->prepare("SELECT event_id, organizer_id, title, description, image_url, location, event_type, virtual_url, start_datetime, end_datetime, timezone, status, created_at, updated_at FROM {$this->table} WHERE id = :id");
-        $stmt->bindParam(':id', $id);
+        $stmt = $this->db->prepare("SELECT event_id, organizer_id, title, description, image_url, location, event_type, virtual_url, start_datetime, end_datetime, timezone, status, created_at, updated_at FROM {$this->table} WHERE event_id = event_id");
+        $stmt->bindParam(':event_id', $event_id);
         $stmt->execute();
         return $stmt->fetch(\PDO::FETCH_ASSOC);
     }
@@ -68,17 +68,17 @@ class User
 
         $stmt->execute();
 
-        $id = $this->db->lastInsertId();
+        $event_id = $this->db->lastInsertId();
 
-        return $this->findById($id);
+        return $this->findById($event_id);
     }
 
-    public function update($id, $data)
+    public function update($event_id, $data)
     {
         // First check if record exists
-        $user = $this->findById($id);
+        $event = $this->findById($event_id);
 
-        if (!$user) {
+        if (!$event) {
             return false;
         }
 
@@ -86,7 +86,7 @@ class User
 
         // Build update query dynamically based on provided data
         $fields = [];
-        $params = [':id' => $id, ':updated_at' => $now];
+        $params = [':event_id' => $event_id, ':updated_at' => $now];
 
         foreach ($data as $key => $value) {
             if (in_array($key, ['title', 'description', 'image_url', 'location', 'event_type', 'virtual_url', 'start_datetime', 'end_datetime', 'timezone', 'status'])) {
@@ -96,47 +96,47 @@ class User
         }
 
         if (empty($fields)) {
-            return $user; // Nothing to update
+            return $event; // Nothing to update
         }
 
         $fields[] = "updated_at = :updated_at";
         $fieldsStr = implode(', ', $fields);
 
-        $stmt = $this->db->prepare("UPDATE {$this->table} SET {$fieldsStr} WHERE id = :id");
+        $stmt = $this->db->prepare("UPDATE {$this->table} SET {$fieldsStr} WHERE event_id = event_id");
         $stmt->execute($params);
 
-        return $this->findById($id);
+        return $this->findById($event_id);
     }
 
-    public function delete($id)
+    public function delete($event_id)
     {
         // First check if record exists
-        $user = $this->findById($id);
+        $event = $this->findById($event_id);
 
-        if (!$user) {
+        if (!$event) {
             return false;
         }
 
-        $stmt = $this->db->prepare("DELETE FROM {$this->table} WHERE id = :id");
-        $stmt->bindParam(':id', $id);
+        $stmt = $this->db->prepare("DELETE FROM {$this->table} WHERE event_id = event_id");
+        $stmt->bindParam(':event_id', $event_id);
         $stmt->execute();
 
         return true;
     }
 
-    public function softDelete($id)
+    public function softDelete($event_id)
     {
         // First check if record exists
-        $user = $this->findById($id);
-        if (!$user) {
+        $event = $this->findById($event_id);
+        if (!$event) {
             return false;
         }
         $now = date('Y-m-d H:i:s');
-        $stmt = $this->db->prepare("UPDATE {$this->table} SET status = :status, updated_at = :updated_at WHERE event_id = :id");
+        $stmt = $this->db->prepare("UPDATE {$this->table} SET status = :status, updated_at = :updated_at WHERE event_id = event_id");
         $status = 'deleted';
         $stmt->bindParam(':status', $status);
         $stmt->bindParam(':updated_at', $now);
-        $stmt->bindParam(':id', $id);
+        $stmt->bindParam(':event_id', $event_id);
         $stmt->execute();
 
         return true;

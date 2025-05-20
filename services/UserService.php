@@ -63,19 +63,20 @@ class UserService
             return false;
         }
         $other_info = [
-            'name' => $user['name'],
+            'first_name' => $user['first_name'],
+            'last_name' => $user['last_name'],
             'email' => $user['email'],
-            'verified' => $user['verified'],
-            'role' => $user['role'],
-            // other need info as required
+            'verified' => $user['verified']
         ];
-        $token = TokenService::issueTokens($this->db, $user['id'], $other_info);
+        $token = TokenService::issueTokens($this->db, $user['user_id'], $other_info);
 
         return [
             'user' => [
-                'id' => $user['id'],
-                'name' => $user['name'],
-                'email' => $user['email']
+                'user_id' => $user['user_id'],
+                'first_name' => $user['first_name'],
+                'last_name' => $user['last_name'],
+                'email' => $user['email'],
+                'profile_image_url' => $user['profile_image_url']
             ],
             'token' => $token,
             'expires_in' => Config::getJwtExpiration()

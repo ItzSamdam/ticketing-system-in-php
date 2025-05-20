@@ -19,10 +19,10 @@ class User
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 
-    public function findById($id)
+    public function findById($user_id)
     {
-        $stmt = $this->db->prepare("SELECT  user_id, email, first_name, last_name, phone_number, address, verified, status, is_organizer, profile_image_url, created_at, updated_at FROM {$this->table} WHERE id = :id");
-        $stmt->bindParam(':id', $id);
+        $stmt = $this->db->prepare("SELECT  user_id, email, first_name, last_name, phone_number, address, verified, status, is_organizer, profile_image_url, created_at, updated_at FROM {$this->table} WHERE user_id = :user_id");
+        $stmt->bindParam(':user_id', $user_id);
         $stmt->execute();
         return $stmt->fetch(\PDO::FETCH_ASSOC);
     }
@@ -60,15 +60,15 @@ class User
 
         $stmt->execute();
 
-        $id = $this->db->lastInsertId();
+        $user_id = $this->db->lastInsertId();
 
-        return $this->findById($id);
+        return $this->findById($user_id);
     }
 
-    public function update($id, $data)
+    public function update($user_id, $data)
     {
         // First check if record exists
-        $user = $this->findById($id);
+        $user = $this->findById($user_id);
 
         if (!$user) {
             return false;
@@ -78,7 +78,7 @@ class User
 
         // Build update query dynamically based on provided data
         $fields = [];
-        $params = [':id' => $id, ':updated_at' => $now];
+        $params = [':user_id' => $user_id, ':updated_at' => $now];
 
         foreach ($data as $key => $value) {
             if (in_array($key, ['first_name', 'last_name', 'phone_number', 'address', 'verified', 'is_organizer', 'profile_image_url',])) {
@@ -94,42 +94,41 @@ class User
         $fields[] = "updated_at = :updated_at";
         $fieldsStr = implode(', ', $fields);
 
-        $stmt = $this->db->prepare("UPDATE {$this->table} SET {$fieldsStr} WHERE id = :id");
+        $stmt = $this->db->prepare("UPDATE {$this->table} SET {$fieldsStr} WHERE user_id = :user_id");
         $stmt->execute($params);
 
-        return $this->findById($id);
+        return $this->findById($user_id);
     }
 
-    public function delete($id)
+    public function delete($user_id)
     {
         // First check if record exists
-        $user = $this->findById($id);
+        $user = $this->findById($user_id);
 
         if (!$user) {
             return false;
         }
 
-        $stmt = $this->db->prepare("DELETE FROM {$this->table} WHERE id = :id");
-        $stmt->bindParam(':id', $id);
+        $stmt = $this->db->prepare("DELETE FROM {$this->table} WHERE user_id = :user_id");
+        $stmt->bindParam(':user_id', $user_id);
         $stmt->execute();
 
         return true;
     }
 
 
-    public function softDelete($id)
+    public function softDelete($user_id)
     {
         // First check if record exists
-        $user = $this->findById($id);
+        $user = $this->findById($user_id);
         if (!$user) {
             return false;
         }
         $now = date('Y-m-d H:i:s');
-        $stmt = $this->db->prepare("UPDATE {$this->table} SET status = :status, updated_at = :updated_at WHERE event_id = :id");
+        $stmt = $this->db->prepare("UPDATE {$this->table} SET status = :status, updated_at = :updated_at WHERE user_id = :user_id");
         $status = 'deleted';
         $stmt->bindParam(':status', $status);
         $stmt->bindParam(':updated_at', $now);
-        $stmt->bindParam(':id', $id);
         $stmt->execute();
 
         return true;
