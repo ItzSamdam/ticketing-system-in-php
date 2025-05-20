@@ -21,7 +21,7 @@ class PromoCode
 
     public function findById($promo_code_id)
     {
-        $stmt = $this->db->prepare("SELECT promo_code_id, code, discount_percentage, valid_until, max_uses, times_used, created_at, updated_at FROM {$this->table} WHERE id = :id");
+        $stmt = $this->db->prepare("SELECT promo_code_id, code, discount_percentage, valid_until, max_uses, times_used, created_at, updated_at FROM {$this->table} WHERE promo_code_id = :promo_code_id");
         $stmt->bindParam(':promo_code_id', $promo_code_id);
         $stmt->execute();
         return $stmt->fetch(\PDO::FETCH_ASSOC);
