@@ -21,7 +21,7 @@ class Event
 
     public function findById($event_id)
     {
-        $stmt = $this->db->prepare("SELECT event_id, organizer_id, title, description, image_url, location, event_type, virtual_url, start_datetime, end_datetime, timezone, status, created_at, updated_at FROM {$this->table} WHERE event_id = event_id");
+        $stmt = $this->db->prepare("SELECT event_id, organizer_id, title, description, image_url, location, event_type, virtual_url, start_datetime, end_datetime, timezone, status, created_at, updated_at FROM {$this->table} WHERE event_id = :event_id");
         $stmt->bindParam(':event_id', $event_id);
         $stmt->execute();
         return $stmt->fetch(\PDO::FETCH_ASSOC);
