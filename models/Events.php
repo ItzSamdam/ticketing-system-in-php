@@ -2,7 +2,7 @@
 
 require_once __DIR__ . '/../config/Database.php';
 
-class Event
+class Events
 {
     private $db;
     private $table = 'events';

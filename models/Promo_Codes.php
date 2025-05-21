@@ -67,7 +67,7 @@ class PromoCode
         $params = [':promo_code_id' => $promo_code_id, ':updated_at' => $now];
 
         foreach ($data as $key => $value) {
-            if (in_array($key, ['name', 'email', 'password'])) {
+            if (in_array($key, ['code', 'discount_percentage', 'valid_until', 'max_uses', 'times_used'])) {
                 $fields[] = "{$key} = :{$key}";
                 $params[":{$key}"] = $value;
             }

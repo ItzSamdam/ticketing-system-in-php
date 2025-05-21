@@ -35,6 +35,14 @@ class Payment
         return $stmt->fetch(\PDO::FETCH_ASSOC);
     }
 
+    public function findByTransactionReference($transaction_reference)
+    {
+        $stmt = $this->db->prepare("SELECT * FROM {$this->table} WHERE transaction_reference = :transaction_reference");
+        $stmt->bindParam(':transaction_reference', $transaction_reference);
+        $stmt->execute();
+        return $stmt->fetch(\PDO::FETCH_ASSOC);
+    }
+
     public function create($data)
     {
         $now = date('Y-m-d H:i:s');
