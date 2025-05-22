@@ -39,23 +39,39 @@ class UserController
         return Response::success($user);
     }
 
+    public function profile()
+    {
+        $profile = $this->userService->getUserById($_REQUEST['user_id']);
+
+        if (!$profile) {
+            return Response::notFound('Account not found');
+        }
+
+        return Response::success($profile);
+    }
+
     public function store(Request $request)
     {
         $body = $request->getBody();
 
         $validator = new Validator($body);
-        $validator->required('name')
+        $validator->required('first_name')
+            ->required('last_name')
+            ->required('phone_number')
+            ->phoneNumber('phone_number')
+            ->required('address')
             ->required('email')
             ->email('email')
             ->required('password')
-            ->min('password', 6);
+            ->min('password', 8)
+            ->alphaNumeric('password');
 
         if (!$validator->isValid()) {
             return Response::validationError($validator->getErrors());
         }
 
-        $user = $this->userService->createUser($body);
-        return Response::success($user, 'User created successfully', 201);
+        $event = $this->userService->createUser($body);
+        return Response::success($event, 'User created successfully', 201);
     }
 
     public function update(Request $request, $params)
@@ -64,37 +80,36 @@ class UserController
 
         $validator = new Validator($body);
 
-        if (isset($body['email'])) {
-            $validator->email('email');
+        if(isset($body['phone_number'])) {
+            $validator->phoneNumber('phone_number');
         }
-
-        if (isset($body['password'])) {
-            $validator->min('password', 6);
+        if (isset($body['address'])) {
+            $validator->required('address');
         }
 
         if (!$validator->isValid()) {
             return Response::validationError($validator->getErrors());
         }
 
-        $user = $this->userService->updateUser($params['id'], $body);
+        $event = $this->userService->updateUser($params['id'], $body);
 
-        if (!$user) {
+        if (!$event) {
             return Response::notFound('User not found');
         }
 
-        return Response::success($user, 'User updated successfully');
+        return Response::success($event, 'Events updated successfully');
     }
 
-    public function destroy(Request $request, $params)
-    {
-        $result = $this->userService->deleteUser($params['id']);
+    // public function destroy(Request $request, $params)
+    // {
+    //     $result = $this->userService->deleteUser($params['id']);
 
-        if (!$result) {
-            return Response::notFound('User not found');
-        }
+    //     if (!$result) {
+    //         return Response::notFound('User not found');
+    //     }
 
-        return Response::success(null, 'User deleted successfully');
-    }
+    //     return Response::success(null, 'User deleted successfully');
+    // }
 
     public function login(Request $request)
     {

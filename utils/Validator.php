@@ -28,6 +28,27 @@ class Validator
         return $this;
     }
 
+    public function phoneNumber($field, $message = null)
+    {
+        if (isset($this->data[$field])) {
+            $phone = preg_replace('/\s+/', '', $this->data[$field]); // Remove any whitespace
+
+            if (preg_match('/^0\d{10}$/', $phone)) {
+                // If phone number starts with '0' and has 11 digits, modify it
+                $phone = "+234" . substr($phone, 1);
+            } elseif (!preg_match('/^\+234\d{10}$/', $phone)) {
+                // If it's not 11 digits starting with '0', ensure it follows +234 + 10 digits format
+                $this->errors[$field] = $message ?: "The {$field} must be a valid Nigerian phone number (+234XXXXXXXXXX)";
+            }
+
+            // Store the validated phone number
+            $this->data[$field] = $phone;
+        }
+
+        return $this;
+    }
+
+
     public function min($field, $length, $message = null)
     {
         if (isset($this->data[$field]) && strlen($this->data[$field]) < $length) {
